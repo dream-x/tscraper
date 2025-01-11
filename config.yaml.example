@@ -1,0 +1,10 @@
+channels:
+  crypto:
+    - "@channel1"
+    - "@channel2"
+  news:
+    - "@channel3"
+    - "@channel4"
+  target_channels:
+    crypto: "@crypto_target"
+    news: "@news_target"

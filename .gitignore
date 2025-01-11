@@ -1,0 +1,27 @@
+.env
+config.yaml
+config*.yaml
+*.session
+
+.ropenproject
+__pycache__
+
+*.pyc
+
+# Packages
+/dist/*
+
+# Unit test / coverage reports
+.coverage
+.pytest_cache
+
+.DS_Store
+.idea/*
+.python-version
+.vscode/*
+
+/docs/site/*
+.mypy_cache
+
+.venv
+/poetry.toml
