@@ -143,30 +143,53 @@ class TelegramScraper:
                 logger.warning(f"No target found for {source}")
                 return
 
-            # Пересылаем сообщение
-            logger.info(f"Forwarding message from {source} to {target}")
-            await self.client.forward_messages(target, event.message)
+            try:
+                # Пробуем использовать send_message с file parameter для пересылки всего контента
+                logger.info(f"Sending message from {source} to {target}")
 
-            # Добавляем информацию об источнике
-            # source_info = f"Source: @{source}\nLink: https://t.me/{source}/{event.message.id}"
-            # await self.client.send_message(target, source_info, reply_to=event.message.id)
-            logger.info(f"Successfully forwarded message from {source} to {target}")
+                # Получаем все медиа из сообщения
+                media = event.message.media
+                grouped_media = event.message.grouped_id
+
+                if grouped_media:
+                    # Получаем сообщения из альбома, начиная с текущего ID
+                    messages = []
+                    current_msg_id = event.message.id
+
+                    # Проверяем сообщения до и после текущего, чтобы собрать весь альбом
+                    async for msg in self.client.iter_messages(
+                        chat.id,
+                        min_id=current_msg_id - 10,  # Проверяем 10 сообщений до
+                        max_id=current_msg_id + 10,  # и 10 сообщений после
+                        reverse=True
+                    ):
+                        if msg.grouped_id == grouped_media and msg.id not in [m.id for m in messages]:
+                            messages.append(msg)
+
+                    # Сортируем сообщения по ID чтобы сохранить порядок
+                    messages.sort(key=lambda x: x.id)
+
+                    # Проверяем что мы не обрабатывали это сообщение ранее
+                    if event.message.id == messages[0].id:
+                        # Пересылаем весь альбом только один раз
+                        await self.client.forward_messages(target, messages)
+                        logger.info(f"Forwarded album with {len(messages)} messages")
+                else:
+                    # Если это одиночное сообщение, пересылаем как есть
+                    await self.client.forward_messages(target, event.message)
+
+                logger.info(f"Successfully sent message from {source} to {target}")
+
+            except Exception as e:
+                logger.error(f"Error in message forwarding, trying alternative method: {e}")
+                # Fallback: пробуем переслать как обычное сообщение
+                await self.client.forward_messages(target, event.message)
 
         except TypeNotFoundError:
             logger.warning(f"TypeNotFoundError when handling message from {source}")
         except Exception as e:
             logger.error(f"Error processing message: {e}", exc_info=True)
 
-            await self.client.forward_messages(target, event.message)
-            # Send source info as a reply to forwarded message
-            source_info = f"Source: {source}\nLink: {source_link}"
-            await self.client.send_message(target, source_info, reply_to=event.message.id)
-            logger.info(f"Forwarded message from {source} to {target}")
-
-        except TypeNotFoundError:
-            logger.warning("Encountered TypeNotFoundError, skipping message")
-        except Exception as e:
-            logger.error(f"Error processing message: {e}")
 
     async def _connect(self) -> bool:
         try:
