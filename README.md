@@ -55,19 +55,22 @@ Note: The session file (`my_user_session.session`) will be created on first run.
 You can also use Docker Compose. Create a `docker-compose.yml`:
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
-  tscraper:
+  scraper:
     build: .
-    container_name: tscraper
-    restart: unless-stopped
-    volumes:
-      - ./config.yaml:/app/config.yaml
-      - ./.env:/app/.env
-      - ./my_user_session.session:/app/my_user_session.session
+    container_name: tscrapper
     ports:
       - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./my_user_session.session:/app/my_user_session.session
+    environment:
+      - HEALTH_PORT=8000
+    restart: unless-stopped
 ```
 
 Then run:
