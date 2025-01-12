@@ -35,8 +35,6 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
-COPY --from=builder /app/config.yaml /app/config.yaml
-COPY --from=builder /app/.env /app/.env
 
 EXPOSE ${HEALTH_PORT}
 
