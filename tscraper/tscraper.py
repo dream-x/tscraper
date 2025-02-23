@@ -30,17 +30,19 @@ def load_yaml_config() -> Dict:
     with open(config_path, 'r') as f:
         try:
             config = yaml.safe_load(f)
-            # Если конфиг уже содержит channels, возвращаем его как есть
+            if not config:
+                raise ConfigError("Invalid config structure")
+            # If config already contains channels, validate it
             if 'channels' in config:
+                if not isinstance(config['channels'], dict):
+                    raise ConfigError("Invalid config structure")
                 if not config['channels'].get('target_channels'):
                     raise ConfigError("Missing target_channels in config")
                 return config
-            # Если конфиг начинается сразу с категорий, оборачиваем его в channels
-            if any(key != 'target_channels' for key in config.keys()):
-                if not config.get('target_channels'):
-                    raise ConfigError("Missing target_channels in config")
-                return {'channels': config}
-            raise ConfigError("Invalid config structure")
+            # If config starts with categories directly, wrap it in channels
+            if not config.get('target_channels'):
+                raise ConfigError("Missing target_channels in config")
+            return {'channels': config}
         except yaml.YAMLError as e:
             raise ConfigError(f"Invalid YAML configuration: {e}")
 
