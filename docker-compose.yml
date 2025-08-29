@@ -13,4 +13,5 @@ services:
       - ./my_user_session.session:/app/my_user_session.session
     environment:
       - HEALTH_PORT=8000
+      - TZ=Europe/Moscow
     restart: unless-stopped

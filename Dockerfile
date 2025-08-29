@@ -25,13 +25,16 @@ RUN poetry build && \
 FROM python:3.13-slim as runner
 
 ENV PYTHONUNBUFFERED=1 \
-    HEALTH_PORT=8000
+    HEALTH_PORT=8000 \
+    TZ=Europe/Moscow
 
 WORKDIR /app
 
-# Install curl for healthcheck
+# Install curl for healthcheck and timezone data
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl tzdata && \
+    ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime && \
+    echo "Europe/Moscow" > /etc/timezone && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
