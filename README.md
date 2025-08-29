@@ -125,6 +125,30 @@ Each category in the configuration can contain:
 - List of source channels (using @ or channel IDs)
 - Target channel in target_channels section
 
+## Authentication
+
+Before running the scraper, you need to authenticate with Telegram:
+
+```bash
+# Run the authentication script
+python auth.py
+```
+
+The authentication process will:
+1. Ask for your phone number in international format (e.g., +79123456789)
+2. Send a verification code to your Telegram
+3. Ask you to enter the code
+4. If you have 2FA enabled, ask for your password
+5. Create a session file `my_user_session.session`
+
+To re-authenticate (if needed):
+```bash
+# Remove the existing session file
+rm my_user_session.session
+# Run authentication again
+python auth.py
+```
+
 ## Usage
 
 Run the scraper:
