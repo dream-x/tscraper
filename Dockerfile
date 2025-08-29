@@ -1,4 +1,4 @@
-FROM python:3.13-slim as builder
+FROM python:3.13-slim
 
 ENV PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \
@@ -6,38 +6,38 @@ ENV PYTHONFAULTHANDLER=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_CREATE=false
-
-WORKDIR /app
-
-RUN pip install poetry
-
-COPY pyproject.toml poetry.lock ./
-RUN poetry install --only main --no-root
-
-COPY . .
-RUN poetry install --only main
-
-# Create entrypoint script
-RUN poetry build && \
-    pip install dist/*.whl
-
-FROM python:3.13-slim as runner
-
-ENV PYTHONUNBUFFERED=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
     HEALTH_PORT=8000 \
     TZ=Europe/Moscow
 
 WORKDIR /app
 
-# Install curl for healthcheck and timezone data
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl tzdata && \
-    ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime && \
-    echo "Europe/Moscow" > /etc/timezone && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    tzdata \
+    && ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime \
+    && echo "Europe/Moscow" > /etc/timezone \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+# Install poetry
+RUN pip install --no-cache-dir poetry
+
+# Copy project files
+COPY pyproject.toml poetry.lock ./
+
+# Configure poetry and install dependencies
+RUN poetry config virtualenvs.create false \
+    && poetry config installer.max-workers 10 \
+    && poetry install --only=main --no-root
+
+# Copy source code
+COPY . .
+
+# Install the application
+RUN poetry install --only=main
 
 EXPOSE ${HEALTH_PORT}
 
