@@ -27,9 +27,9 @@ env/
 .DS_Store
 Thumbs.db
 
-# Documentation
-README.md
+# Documentation (except README.md which is needed for Poetry)
 *.md
+!README.md
 .claude/
 
 # Test files
