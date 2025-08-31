@@ -37,7 +37,7 @@ RUN poetry config virtualenvs.create false \
 COPY . .
 
 # Install the application with all files present
-RUN poetry install --only=main --no-deps
+RUN poetry install --only=main
 
 EXPOSE ${HEALTH_PORT}
 
