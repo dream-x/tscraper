@@ -1,5 +1,7 @@
 # TScraper
 
+> 🤖 **Pet Project Notice**: This is my personal pet project created for vibeсoding sessions with AI assistants like Claude, Codex, and other coding platforms. It's a playground for experimenting with AI-assisted development workflows and exploring new coding patterns. Enjoy the ride! ✨
+
 TScraper is a Telegram channel monitoring and message forwarding tool. It allows you to automatically forward messages from multiple source channels to designated target channels based on predefined categories.
 
 ## Features
@@ -198,8 +200,20 @@ Common issues and solutions:
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
+
+This project is perfect for:
+- 🤖 AI-assisted coding experiments
+- 🎯 Learning modern Python patterns
+- 🚀 Exploring containerization and monitoring
+- 💡 Prototyping Telegram bot features
+
+Feel free to fork, experiment, and have fun! 
 
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
+
+---
+
+*Happy coding! May your AI assistants be helpful and your code be bug-free* 🎉
