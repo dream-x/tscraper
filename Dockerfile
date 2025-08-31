@@ -28,16 +28,16 @@ RUN pip install --no-cache-dir poetry
 # Copy project files
 COPY pyproject.toml poetry.lock ./
 
-# Configure poetry and install dependencies
+# Configure poetry and install dependencies only
 RUN poetry config virtualenvs.create false \
     && poetry config installer.max-workers 10 \
     && poetry install --only=main --no-root
 
-# Copy source code
+# Copy all source code including README.md
 COPY . .
 
-# Install the application
-RUN poetry install --only=main
+# Install the application with all files present
+RUN poetry install --only=main --no-deps
 
 EXPOSE ${HEALTH_PORT}
 

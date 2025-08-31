@@ -5,6 +5,7 @@ description = ""
 authors = ["Maks K <cedabef@gmail.com>"]
 readme = "README.md"
 license = "MIT"
+packages = [{include = "tscraper"}]
 
 [tool.poetry.dependencies]
 python = "^3.13"
