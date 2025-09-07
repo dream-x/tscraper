@@ -1,9 +1,15 @@
-name: Build and Push Docker Image
+name: Push Docker Image
 
 on:
   push:
     tags:
-      - "*.*.*"
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build and push'
+        required: true
+        type: string
 
 env:
   DOCKER_IMAGE: kinetik/tscraper
@@ -57,7 +63,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            latest
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -69,6 +75,14 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache,mode=max
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.DOCKER_IMAGE }}
+          short-description: "Telegram channel monitoring bot"
 
   release:
     runs-on: ubuntu-latest
