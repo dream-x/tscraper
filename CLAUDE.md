@@ -42,18 +42,27 @@ curl localhost:8000/health
 ```
 tscraper/
   tscraper.py      # Main TelegramScraper class and entry point
-  health.py        # FastAPI /health endpoint
+  health.py        # FastAPI /health + /metrics endpoints
+  metrics.py       # Prometheus metric definitions
   __init__.py
 tests/
   conftest.py      # Shared fixtures (config, mock_message, mock_channel, mock_client)
   test_scraper.py  # Scraper unit tests
   test_config.py   # Config loading tests
+monitoring/
+  prometheus.yml               # Prometheus scrape config
+  alerts.yml                   # Alerting rules
+  alertmanager/alertmanager.yml
+  grafana/dashboards/tscraper.json
+  grafana/provisioning/        # Datasource & dashboard provisioning
 auth.py            # Telegram session bootstrapper
 config.yaml.example
 .env.example
 pyproject.toml
 Dockerfile
-docker-compose.yml
+docker-compose.yml             # Scraper service
+docker-compose.monitoring.yml  # Prometheus + Grafana + Alertmanager
+MONITORING.md      # Monitoring setup guide
 AGENTS.md          # Repository guidelines and architecture
 BUGS.md            # Known issues and suggested fixes
 ```
@@ -118,8 +127,20 @@ See `BUGS.md` for tracked bugs including:
 - Session file `my_user_session.session` must persist across Docker restarts (mounted as volume)
 - The Dockerfile hardcodes `TZ=Europe/Moscow`
 
+## Monitoring
+
+See `MONITORING.md` for full setup details. Key points:
+
+- **Metrics:** Prometheus endpoint at `GET /metrics` (same port as health)
+- **Dashboard:** pre-built Grafana dashboard in `monitoring/grafana/dashboards/tscraper.json`
+- **Alerts:** Prometheus rules in `monitoring/alerts.yml` (disconnect, high fail rate, no messages, frequent reconnects)
+- **Stack:** `docker-compose -f docker-compose.monitoring.yml up -d` starts Prometheus, Grafana, Alertmanager
+- **External Grafana:** import the dashboard JSON and point a Prometheus scrape job at `<host>:8000/metrics`
+
 ## Deployment
 
 - Docker image published to `kinetik/tscraper` via GitHub Actions on semver tags (`*.*.*`)
+- CI pipeline runs `pytest` before building the image
+- GitHub Release with auto-generated notes is created on each tag
 - Multi-platform: linux/amd64, linux/arm64
-- Health check: `GET /health` returns `{"status": "healthy", "uptime": "...", "timestamp": "..."}`
+- Health check: `GET /health` returns `healthy` (200) or `degraded` (503) based on actual scraper connection state
