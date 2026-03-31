@@ -26,3 +26,8 @@ tscraper = "tscraper.tscraper:main"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+docs = [
+    "mkdocs-material (>=9.7.6,<10.0.0)"
+]
