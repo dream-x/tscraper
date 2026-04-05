@@ -12,7 +12,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
             type=ref,event=pr
             type=sha,prefix={{branch}}-
 
-      - name: Build Docker image
+      - name: Build Docker image (multi-platform)
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -44,20 +44,24 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and load for testing (amd64 only)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: ${{ env.DOCKER_IMAGE }}:test
+          cache-from: type=gha
+
       - name: Test Docker image
         run: |
-          # Get the first tag from the list
-          TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
-          echo "Testing image: $TAG"
-          
-          # Test that the container can start and Python path is correct
-          docker run --rm $TAG python -c "
+          echo "Testing image: ${{ env.DOCKER_IMAGE }}:test"
+          docker run --rm ${{ env.DOCKER_IMAGE }}:test python -c "
           import sys
           sys.path.append('/app')
           try:
               import tscraper.tscraper
-              print('✅ TScraper module import successful')
+              print('TScraper module import successful')
           except ImportError as e:
-              print(f'❌ Import failed: {e}')
+              print(f'Import failed: {e}')
               sys.exit(1)
           "
