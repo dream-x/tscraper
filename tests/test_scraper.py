@@ -177,7 +177,7 @@ async def test_connect_unauthorized():
     client.is_connected.return_value = True
     client.is_user_authorized.return_value = False
 
-    scraper._setup_client = AsyncMock(return_value=client)
+    scraper.client = client
     assert await scraper._connect() == False
 
 @pytest.mark.asyncio

@@ -34,7 +34,6 @@
 
 - Added pytest step before Docker image build
 - Added automatic GitHub Release creation with changelog on tag push
-- Added separate `build.yml` workflow for branch/PR Docker builds (no push)
 - Added Docker Hub description auto-update on tag push
 - Multi-platform builds: linux/amd64, linux/arm64
 - Fixed `container_name` typo in docker-compose.yml (`tscrapper` -> `tscraper`)

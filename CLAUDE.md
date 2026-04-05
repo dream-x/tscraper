@@ -56,7 +56,6 @@ monitoring/
   grafana/dashboards/tscraper.json
   grafana/provisioning/        # Datasource & dashboard provisioning
 .github/workflows/
-  build.yml                    # Docker build on branches/PRs (no push)
   docker-publish.yml           # Test + build + push + release on tags
   docs.yml                     # MkDocs deploy to GitHub Pages
 docs/                          # MkDocs documentation source
@@ -145,7 +144,7 @@ See `MONITORING.md` for full setup details. Key points:
 ## Deployment
 
 - Docker image published to `kinetik/tscraper` via GitHub Actions on semver tags (`v*.*.*`)
-- CI pipeline: `build.yml` runs Docker build on branches/PRs, `docker-publish.yml` runs test+build+push on tags
+- CI pipeline: `docker-publish.yml` runs test + build + push on tags (`v*.*.*`)
 - GitHub Release with auto-generated notes is created on each tag
 - Docker Hub description auto-updated on tag push
 - Multi-platform: linux/amd64, linux/arm64
