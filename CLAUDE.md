@@ -124,7 +124,7 @@ See `BUGS.md` for tracked bugs including:
 - Numeric channel ID normalization (prefixing with `@` breaks matching)
 - Config vs event ID format mismatch
 - Fallback forwarding retries the same method
-- Dev dependencies in main poetry group (should be in `[tool.poetry.group.dev.dependencies]`)
+- Dev dependencies were in main poetry group (fixed — now in `[tool.poetry.group.dev.dependencies]`)
 
 ## Security
 

@@ -26,9 +26,7 @@
 - `.gitignore` typo:
   - Problem: Has `.ropenproject`; repository actually uses `.ropeproject`.
   - Fix: Add `.ropeproject` (retain the existing entry if desired).
-- Dev dependencies in main:
-  - Problem: `pytest*` listed as main dependencies; production image installs them.
-  - Fix: Move to `[tool.poetry.group.dev.dependencies]` and keep `poetry install --only=main` in Docker.
+- ~~Dev dependencies in main~~ — **Fixed in v0.2.0**: pytest moved to `[tool.poetry.group.dev.dependencies]`.
 
 ## Optional / Minor
 - `auth.py` user display:

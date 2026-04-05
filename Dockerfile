@@ -31,10 +31,8 @@ COPY pyproject.toml poetry.lock ./
 # Copy all source code first
 COPY . .
 
-# Configure poetry and install dependencies
-RUN poetry config virtualenvs.create false \
-    && poetry config installer.max-workers 10 \
-    && poetry install --only=main
+# Install dependencies (main group only, no dev/docs)
+RUN poetry install --only=main --no-interaction --no-ansi
 
 EXPOSE ${HEALTH_PORT}
 
