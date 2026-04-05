@@ -1,0 +1,67 @@
+site_name: TScraper
+site_description: Telegram channel monitoring and message forwarding tool
+site_url: https://dream-x.github.io/tscraper/
+repo_url: https://github.com/dream-x/tscraper
+repo_name: dream-x/tscraper
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Configuration: getting-started/configuration.md
+      - Authentication: getting-started/authentication.md
+  - Monitoring:
+      - Setup: monitoring/setup.md
+      - Metrics: monitoring/metrics.md
+      - Alerts: monitoring/alerts.md
+      - External Grafana: monitoring/external-grafana.md
+  - Development:
+      - Contributing: development/contributing.md
+      - Architecture: development/architecture.md
+      - Known Issues: development/known-issues.md
+  - Changelog: changelog.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - tables
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+extra:
+  version:
+    provider: mike
+    default: latest

@@ -3,7 +3,7 @@ version: "3.8"
 services:
   scraper:
     build: .
-    container_name: tscrapper
+    container_name: tscraper
     ports:
       - "8000:8000"
     env_file:

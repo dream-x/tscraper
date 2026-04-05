@@ -1,6 +1,7 @@
 import os
 import sys
 import asyncio
+import time
 import uvicorn
 import yaml
 import logging
@@ -11,7 +12,18 @@ from telethon.errors import TypeNotFoundError
 from telethon.tl.types import PeerChannel
 from datetime import datetime
 from dotenv import load_dotenv
-from .health import app
+from .health import app, set_scraper_status
+from .metrics import (
+    scraper_connected,
+    scraper_uptime_seconds,
+    reconnect_total,
+    messages_received_total,
+    messages_forwarded_total,
+    messages_failed_total,
+    albums_forwarded_total,
+    forward_duration_seconds,
+    scraper_info,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -82,6 +94,19 @@ class TelegramScraper:
         logger.info(f"Monitoring channels: {sources}")
         return sources
 
+    def _get_category_for_source(self, source: str) -> str | None:
+        """Get category name for a source channel."""
+        if isinstance(source, int):
+            source = str(source)
+        if not source.startswith('@'):
+            source = f"@{source}"
+
+        for category, channels in self.config.items():
+            if category != 'target_channels':
+                if source in channels:
+                    return category
+        return None
+
     async def _get_channel_info(self, channel_id: Union[int, str]) -> Dict:
         """Get channel title and username if available."""
         if channel_id in self.channel_cache:
@@ -126,6 +151,8 @@ class TelegramScraper:
         return None
 
     async def _handle_message(self, event):
+        source = "<unknown>"
+        category = "unknown"
         try:
             logger.info(f"Received message event")
             if not event.message:
@@ -139,12 +166,16 @@ class TelegramScraper:
                 return
 
             source = chat.username if chat.username else str(chat.id)
+            category = self._get_category_for_source(source) or "unknown"
+            messages_received_total.labels(category=category).inc()
+
             target = self._get_target_for_source(source)
 
             if not target:
                 logger.warning(f"No target found for {source}")
                 return
 
+            t0 = time.monotonic()
             try:
                 # Пробуем использовать send_message с file parameter для пересылки всего контента
                 logger.info(f"Sending message from {source} to {target}")
@@ -175,21 +206,39 @@ class TelegramScraper:
                     if event.message.id == messages[0].id:
                         # Пересылаем весь альбом только один раз
                         await self.client.forward_messages(target, messages)
+                        albums_forwarded_total.labels(category=category).inc()
                         logger.info(f"Forwarded album with {len(messages)} messages")
                 else:
                     # Если это одиночное сообщение, пересылаем как есть
                     await self.client.forward_messages(target, event.message)
 
+                elapsed = time.monotonic() - t0
+                forward_duration_seconds.observe(elapsed)
+                messages_forwarded_total.labels(category=category).inc()
                 logger.info(f"Successfully sent message from {source} to {target}")
 
             except Exception as e:
                 logger.error(f"Error in message forwarding, trying alternative method: {e}")
-                # Fallback: пробуем переслать как обычное сообщение
-                await self.client.forward_messages(target, event.message)
+                try:
+                    # Fallback: отправляем текст + медиа отдельно
+                    await self.client.send_message(
+                        target,
+                        event.message.message,
+                        file=event.message.media,
+                    )
+                    elapsed = time.monotonic() - t0
+                    forward_duration_seconds.observe(elapsed)
+                    messages_forwarded_total.labels(category=category).inc()
+                    logger.info(f"Fallback forwarding succeeded for {source} to {target}")
+                except Exception as fallback_err:
+                    messages_failed_total.labels(category=category).inc()
+                    logger.error(f"Fallback forwarding also failed: {fallback_err}")
 
         except TypeNotFoundError:
+            messages_failed_total.labels(category=category).inc()
             logger.warning(f"TypeNotFoundError when handling message from {source}")
         except Exception as e:
+            messages_failed_total.labels(category=category).inc()
             logger.error(f"Error processing message: {e}", exc_info=True)
 
 
@@ -211,14 +260,20 @@ class TelegramScraper:
 
             if not await self.client.is_user_authorized():
                 logger.error("User is not authorized!")
+                scraper_connected.set(0)
+                set_scraper_status(connected=False, last_error="User not authorized")
                 return False
 
             self.connection_start_time = datetime.now()
+            scraper_connected.set(1)
+            set_scraper_status(connected=True)
             logger.info(f"Connected successfully at {self.connection_start_time}")
             return True
 
         except Exception as e:
             logger.error(f"Connection attempt failed: {e}")
+            scraper_connected.set(0)
+            set_scraper_status(connected=False, last_error=str(e))
             if self.client:
                 await self.client.disconnect()
             return False
@@ -233,6 +288,7 @@ class TelegramScraper:
             try:
                 if not self.client or not self.client.is_connected():
                     logger.info(f"Attempting to connect...")
+                    reconnect_total.inc()
                     connected = await self._connect()
 
                     if not connected:
@@ -249,11 +305,32 @@ class TelegramScraper:
                 if self.client:
                     await self.client.run_until_disconnected()
 
+                # run_until_disconnected returned — connection dropped
+                logger.warning("Disconnected from Telegram, will reconnect...")
+                scraper_connected.set(0)
+                set_scraper_status(connected=False, last_error="Disconnected")
+
             except Exception as e:
                 logger.error(f"Connection error: {e}")
+                scraper_connected.set(0)
+                set_scraper_status(connected=False, last_error=str(e))
                 if self.client:
-                    await self.client.disconnect()
-                continue
+                    try:
+                        await self.client.disconnect()
+                    except Exception:
+                        pass
+                wait_time = min(self.reconnect_delay * 2, self.max_reconnect_delay)
+                logger.info(f"Reconnecting in {wait_time} seconds...")
+                await asyncio.sleep(wait_time)
+                self.reconnect_delay = wait_time
+
+    async def _update_uptime(self):
+        """Background task to update the uptime gauge."""
+        while True:
+            if self.connection_start_time:
+                elapsed = (datetime.now() - self.connection_start_time).total_seconds()
+                scraper_uptime_seconds.set(elapsed)
+            await asyncio.sleep(15)
 
 async def run_services(scraper: TelegramScraper, health_port: int):
     health_server = uvicorn.Server(
@@ -267,6 +344,7 @@ async def run_services(scraper: TelegramScraper, health_port: int):
 
     await asyncio.gather(
         scraper.start(),
+        scraper._update_uptime(),
         health_server.serve()
     )
 
@@ -284,6 +362,12 @@ def main():
             raise ConfigError("API_HASH is required")
 
         config = load_yaml_config()
+
+        scraper_info.info({
+            'version': '0.2.0',
+            'health_port': str(health_port),
+        })
+
         scraper = TelegramScraper(int(api_id), api_hash, config)
 
         asyncio.run(run_services(scraper, health_port))

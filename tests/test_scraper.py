@@ -1,7 +1,24 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from tscraper.tscraper import TelegramScraper
 from telethon.tl.types import Message, PeerChannel, Channel
+
+
+class AsyncIteratorMock:
+    """Helper to make a list work as an async iterator."""
+    def __init__(self, items):
+        self._items = items
+        self._index = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self._index >= len(self._items):
+            raise StopAsyncIteration
+        item = self._items[self._index]
+        self._index += 1
+        return item
 
 @pytest.fixture
 def config():
@@ -125,10 +142,12 @@ async def test_message_handler_with_album(mock_client, config):
         msg = MagicMock(spec=Message)
         msg.id = i + 1
         msg.grouped_id = grouped_id
+        msg.media = MagicMock()
+        msg.message = f"Album message {i}"
         messages.append(msg)
 
-    # Setup client.iter_messages
-    mock_client.iter_messages.return_value = messages
+    # iter_messages returns an async iterator (not a coroutine)
+    mock_client.iter_messages = MagicMock(return_value=AsyncIteratorMock(messages))
 
     # Create event with first message
     event = AsyncMock()
@@ -169,17 +188,10 @@ async def test_connect_authorized(mock_client, config):
     mock_client.is_user_authorized.return_value = True
     mock_client.connect = AsyncMock()
     mock_client.is_connected.return_value = True
+    mock_client.on = MagicMock(return_value=lambda f: f)
 
-    # Mock the _resolve_channels method
-    scraper._resolve_channels = AsyncMock(return_value=["@channel1"])
-
-    # Setup client creation
-    scraper._setup_client = AsyncMock(return_value=mock_client)
-
-    # Ensure message handler is properly set up
-    @mock_client.on.return_value
-    def message_handler(event):
-        pass
+    # Inject mock client directly so _connect skips TelegramClient creation
+    scraper.client = mock_client
 
     assert await scraper._connect() == True
 

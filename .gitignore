@@ -21,6 +21,7 @@ __pycache__
 .vscode/*
 
 /docs/site/*
+/site/
 .mypy_cache
 
 .venv
