@@ -10,14 +10,17 @@ TScraper is a Telegram channel monitoring and message forwarding tool. It allows
 - Forward messages to specific target channels based on categories
 - Preserve full media albums when forwarding
 - Automatic reconnection with exponential backoff
-- Health check endpoint
+- Prometheus metrics endpoint (`/metrics`)
+- Pre-built Grafana dashboard with alerting rules
+- Health check endpoint with real connection state
 - Easy configuration using YAML
+- Docker multi-platform images (amd64/arm64)
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.13+
 - Telegram API credentials (api_id and api_hash)
-- Required Python packages (see requirements.txt)
+- [Poetry](https://python-poetry.org/) package manager
 
 ## Docker Installation
 
@@ -90,15 +93,16 @@ cd tscraper
 
 2. Install dependencies:
 ```bash
-pip install -r requirements.txt
+poetry install
 ```
 
 3. Copy example configuration:
 ```bash
 cp config.yaml.example config.yaml
+cp .env.example .env
 ```
 
-4. Create `.env` file with your Telegram API credentials:
+4. Edit `.env` with your Telegram API credentials:
 ```bash
 API_ID=your_api_id # my.telegram.org
 API_HASH=your_api_hash # my.telegram.org
@@ -155,7 +159,9 @@ python auth.py
 
 Run the scraper:
 ```bash
-python -m tscraper
+poetry run tscraper
+# or
+python -m tscraper.tscraper
 ```
 
 The scraper will:
@@ -177,9 +183,15 @@ The scraper will:
 - Comprehensive logging
 - Graceful handling of network issues
 
+### Monitoring
+- Prometheus metrics at `/metrics`
+- Pre-built Grafana dashboard with 7 panels
+- Alertmanager rules for disconnect, high fail rate, no messages, frequent reconnects
+- See [MONITORING.md](MONITORING.md) for full setup
+
 ### Health Checks
-- HTTP endpoint for monitoring service health
-- Returns service uptime and connection status
+- HTTP endpoint at `/health` with real connection state
+- Returns `200` (healthy) or `503` (degraded) with JSON details
 
 ## Error Codes and Troubleshooting
 

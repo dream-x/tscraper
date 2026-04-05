@@ -20,15 +20,9 @@
   - Fix: Build `sources` with canonical forms (strip `@` for usernames, keep `-100…` for IDs) before `events.NewMessage(chats=…)`.
 
 ## Documentation & Project Hygiene
-- Python version mismatch:
-  - Problem: README claims Python 3.7+, but `pyproject.toml` requires 3.13.
-  - Fix: Update README to 3.13+ or relax `pyproject` if broader support is intended.
-- Install/run instructions drift:
-  - Problem: README references `requirements.txt` (not present) and `python -m tscraper` (no package `__main__`).
-  - Fix: Recommend Poetry (`poetry install`) and `python -m tscraper.tscraper` or `poetry run tscraper`.
-- Docker Compose naming:
-  - Problem: Uses `container_name: tscrapper` (typo).
-  - Fix: Align to `tscraper`.
+- ~~Python version mismatch~~ — **Fixed in v0.2.0**: README updated to Python 3.13+.
+- ~~Install/run instructions drift~~ — **Fixed in v0.2.0**: README now uses Poetry and correct entry points.
+- ~~Docker Compose naming~~ — **Fixed in v0.2.0**: `container_name` is now `tscraper`.
 - `.gitignore` typo:
   - Problem: Has `.ropenproject`; repository actually uses `.ropeproject`.
   - Fix: Add `.ropeproject` (retain the existing entry if desired).

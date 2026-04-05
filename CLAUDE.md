@@ -55,6 +55,12 @@ monitoring/
   alertmanager/alertmanager.yml
   grafana/dashboards/tscraper.json
   grafana/provisioning/        # Datasource & dashboard provisioning
+.github/workflows/
+  build.yml                    # Docker build on branches/PRs (no push)
+  docker-publish.yml           # Test + build + push + release on tags
+  docs.yml                     # MkDocs deploy to GitHub Pages
+docs/                          # MkDocs documentation source
+mkdocs.yml                     # MkDocs configuration
 auth.py            # Telegram session bootstrapper
 config.yaml.example
 .env.example
@@ -119,7 +125,6 @@ See `BUGS.md` for tracked bugs including:
 - Config vs event ID format mismatch
 - Fallback forwarding retries the same method
 - Dev dependencies in main poetry group (should be in `[tool.poetry.group.dev.dependencies]`)
-- README references outdated Python version and missing `requirements.txt`
 
 ## Security
 
@@ -139,8 +144,10 @@ See `MONITORING.md` for full setup details. Key points:
 
 ## Deployment
 
-- Docker image published to `kinetik/tscraper` via GitHub Actions on semver tags (`*.*.*`)
-- CI pipeline runs `pytest` before building the image
+- Docker image published to `kinetik/tscraper` via GitHub Actions on semver tags (`v*.*.*`)
+- CI pipeline: `build.yml` runs Docker build on branches/PRs, `docker-publish.yml` runs test+build+push on tags
 - GitHub Release with auto-generated notes is created on each tag
+- Docker Hub description auto-updated on tag push
 - Multi-platform: linux/amd64, linux/arm64
 - Health check: `GET /health` returns `healthy` (200) or `degraded` (503) based on actual scraper connection state
+- MkDocs documentation deployed to GitHub Pages via `docs.yml` on pushes to `master`
